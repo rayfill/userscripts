@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         save tweet with media contents
 // @namespace    http://twitter.com/
-// @version      20191108
+// @version      20191108.1
 // @description  save tweet with media contents
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
@@ -112,9 +112,9 @@ let getMedium = (mediumInfo) => {
 
         return { ext: format, url: `${base}?format=${format}&name=${name}` };
 
-    } else if (type === "video") {
+    } else if (type === "video" || type === "animated_gif") {
         let bestTarget = null;
-        let bitrate = 0;
+        let bitrate = -1;
         for (let key in vinfo.variants) {
             let medium = vinfo.variants[key];
             if (medium.content_type === "video/mp4") {
