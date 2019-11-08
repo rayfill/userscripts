@@ -4,6 +4,7 @@
 // @version      20191108
 // @description  save tweet with media contents
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
+// @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
 // @author       rayfill
 // @match        https://twitter.com/*
 // @grant        unsafeWindow

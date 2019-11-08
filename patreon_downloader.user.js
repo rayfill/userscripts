@@ -7,6 +7,7 @@
 // @version      20191108
 // @description  patreon downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
+// @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
 // @author       rayfill
 // @match        https://www.patreon.com/posts/*
 // @connect      patreonusercontent.com

@@ -4,6 +4,7 @@
 // @version      20191108
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/pixiv_fanbox_downloader.user.js
+// @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/pixiv_fanbox_downloader.user.js
 // @author       rayfill
 // @match        https://www.pixiv.net/fanbox/creator/*/post/*
 // @require      https://raw.githubusercontent.com/rayfill/GM_fetch/master/GM_fetch.js
