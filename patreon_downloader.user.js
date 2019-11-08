@@ -4,7 +4,7 @@
 // @require      https://raw.githubusercontent.com/Stuk/jszip/master/dist/jszip.js
 // @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/master/dist/FileSaver.js
 // @require      https://raw.githubusercontent.com/axios/axios/master/dist/axios.js
-// @version      20191108
+// @version      20191108.1
 // @description  patreon downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
