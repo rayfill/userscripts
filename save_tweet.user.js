@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         save tweet with media contents
 // @namespace    http://twitter.com/
-// @version      0.2
+// @version      20191108
 // @description  save tweet with media contents
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
 // @author       rayfill
