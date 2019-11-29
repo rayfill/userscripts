@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         save tweet with media contents
 // @namespace    http://twitter.com/
-// @version      20191108.1
+// @version      20191130
 // @description  save tweet with media contents
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
@@ -92,6 +92,8 @@ const save = (article) => {
         zip.generateAsync({ type: "blob" }).then((blob) => {
             saveAs(blob, filename);
         });
+    }).catch((err) => {
+	alert(err);
     });
 }
 
