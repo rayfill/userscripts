@@ -3,8 +3,8 @@
 // @namespace    https://pixiv.fanbox.net/
 // @version      20191130
 // @description  pixiv fanbox article downloader
-// @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/pixiv_fanbox_downloader.user.js
-// @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/pixiv_fanbox_downloader.user.js
+// @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
+// @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @author       rayfill
 // @match        https://www.pixiv.net/fanbox
 // @match        https://www.pixiv.net/fanbox/*
