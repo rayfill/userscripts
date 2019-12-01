@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20191130.1
+// @version      20191201
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -16,6 +16,7 @@
 // @connect      pximg.net
 // @run-at       document-start
 // @grant        GM_xmlhttpRequest
+// @grant        unsafeWindow
 // ==/UserScript==
 const indexURL = new RegExp("^https://www.pixiv.net/ajax/fanbox/index$");
 const postListHomeURL = new RegExp("^https://fanbox.pixiv.net/api/post[.]listHome.*$");
@@ -42,36 +43,36 @@ function main() {
     let json = null;
     if (match = indexURL.exec(url)) {
       if (resType !== "json") {
-	json = JSON.parse(content);
+        json = JSON.parse(content);
       } else {
-	json = content;
+        json = content;
       }
       let items = json.body.postListForHome.items.concat(json.body.postListOfSupporting.items);
       collectItems(items);
 
     } else if (match = postListHomeURL.exec(url)) {
       if (resType !== "json") {
-	json = JSON.parse(content);
+        json = JSON.parse(content);
       } else {
-	json = content;
+        json = content;
       }
       let items = json.body.items;
       collectItems(items);
 
     } else if (match = postURL.exec(url)) {
       if (resType !== "json") {
-	json = JSON.parse(content);
+        json = JSON.parse(content);
       } else {
-	json = content;
+        json = content;
       }
       let items = [json.body];
       collectItems(items);
-      
+
     } else if (match = creatorURL.exec(url)) {
       if (resType !== "json") {
-	json = JSON.parse(content);
+        json = JSON.parse(content);
       } else {
-	json = content;
+        json = content;
       }
       let items = json.body.post.items;
       collectItems(items);
@@ -79,11 +80,11 @@ function main() {
   });
 
   let observer = new MutationObserver((records, observer) => {
-    window.postMessage({ type: "mutation" });
+    window.postMessage({ type: "mutation" }, "*");
   });
 
   window.addEventListener("message", mutationHandler);
-  
+
   observer.observe(document, { childList: true, subtree: true });
 }
 
@@ -94,7 +95,7 @@ function getArticleId(article) {
     throw new TypeError("invalid url");
 
   return match[2];
-    
+
 }
 
 function handleImage(body) {
@@ -120,14 +121,14 @@ function fetchResources(resources) {
     return {
       filename: elm.filename,
       blob: GM_fetch(elm.url).then((res) => {
-	if (!res.ok)
-	  throw new TypeError("resource fetch failed", res);
-	return res.blob();
+        if (!res.ok)
+          throw new TypeError("resource fetch failed", res);
+        return res.blob();
       })
     };
   });
 }
-  
+
 function download(id, btn) {
   let info = itemMap.get(id);
   console.log("info", info);
@@ -145,16 +146,16 @@ function download(id, btn) {
 
   let resources = [];
   switch (type) {
-  case "image":
-    resources = handleImage(body);
-    break;
-    
-  case "file":
-    resources = handleFile(body);
-    break;
-    
-  default:
-    throw new TypeError("unhandled type: " + type);
+    case "image":
+      resources = handleImage(body);
+      break;
+
+    case "file":
+      resources = handleFile(body);
+      break;
+
+    default:
+      throw new TypeError("unhandled type: " + type);
   }
 
   console.log("resources:", resources);
@@ -178,14 +179,18 @@ function download(id, btn) {
 const proceedColor = "rgb(0, 150, 250)";
 const unproceedColor = "rgb(180, 180, 180)";
 function mutationHandler(evt) {
+  let { type: type } = evt.target;
+  if (type !== "mutation") {
+    return;
+  }
   console.log("mutation");
-  
+
   let article = document.querySelector('article');
   if (article !== null) {
     if (article.dataset.proceed) {
       return;
     }
-    
+
     let id = getArticleId(article);
     if (!itemMap.get(id)) {
       return;
