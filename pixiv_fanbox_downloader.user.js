@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20191201
+// @version      20191201.1
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -179,7 +179,7 @@ function download(id, btn) {
 const proceedColor = "rgb(0, 150, 250)";
 const unproceedColor = "rgb(180, 180, 180)";
 function mutationHandler(evt) {
-  let { type: type } = evt.target;
+  let { type: type } = evt.data;
   if (type !== "mutation") {
     return;
   }
