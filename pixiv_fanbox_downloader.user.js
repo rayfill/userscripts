@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20191201.1
+// @version      20191214
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -90,7 +90,9 @@ function main() {
 
 const postIdPattern = new RegExp('^https://www.pixiv.net/fanbox/creator/([0-9]+)/post/([0-9]+)$');
 function getArticleId(article) {
-  let match = postIdPattern.exec(window.location.href);
+  let url = new URL(window.location.href);
+  url.search = "";
+  let match = postIdPattern.exec(url.toString());
   if (match === null)
     throw new TypeError("invalid url");
 
@@ -116,17 +118,61 @@ function handleFile(body) {
   });
 }
 
+function handleArticle(body) {
+  console.log("body", body);
+  let result = [];
+  for (let imageId in body.imageMap) {
+    let { id: id, extension: extension, originalUrl: originalUrl } = body.imageMap[imageId];
+    result.push({
+      filename: `${id}.${extension}`,
+      url: originalUrl
+    });
+  }
+  return result;
+}
+
+function makeProgressHandler() {
+  let loaded = 0;
+  return (evt) => {
+    let currentLoaded = evt.loaded;
+    let amount = currentLoaded - loaded;
+    loaded = currentLoaded;
+    window.postMessage({ type: "progress", amount: amount }, "*");
+  };
+}
+    
 function fetchResources(resources) {
   return resources.map((elm) => {
     return {
       filename: elm.filename,
-      blob: GM_fetch(elm.url).then((res) => {
+      blob: GM_fetch(elm.url, { onprogress: makeProgressHandler()}).then((res) => {
         if (!res.ok)
           throw new TypeError("resource fetch failed", res);
         return res.blob();
       })
     };
   });
+}
+
+function parseArticle(body) {
+  let imageMap = body.imageMap;
+  let blocks = body.blocks.map((block) => {
+    switch (block.type) {
+    case "p":
+      return `<p>${block.text}</p>`;
+      break;
+      
+    case "image":
+      return `<img src="article/${block.imageId}.${imageMap[block.imageId].extension}"></img>`;
+      break;
+      
+    default:
+      alert("unknown block type:", block.type);
+      debugger;
+    }
+  });
+
+  return '<!DOCTYPE html><head><meta charset="UTF-8"/></head><body>' + blocks.join('') + "</body></html>";
 }
 
 function download(id, btn) {
@@ -146,22 +192,31 @@ function download(id, btn) {
 
   let resources = [];
   switch (type) {
-    case "image":
-      resources = handleImage(body);
-      break;
+  case "image":
+    resources = handleImage(body);
+    break;
 
-    case "file":
-      resources = handleFile(body);
-      break;
+  case "file":
+    resources = handleFile(body);
+    break;
 
-    default:
-      throw new TypeError("unhandled type: " + type);
+  case "article":
+    resources = handleArticle(body);
+    break;
+
+  default:
+    throw new TypeError("unhandled type: " + type);
   }
 
   console.log("resources:", resources);
   let res = fetchResources(resources);
   let zip = new JSZip();
-  zip.file("message.txt", text);
+  if (type === "article") {
+    let html = parseArticle(body);
+    zip.file("message.html", html);
+  } else {
+    zip.file("message.txt", text);
+  }
   zip.file("cover.jpg", GM_fetch(cover).then((res) => {
     if (!res.ok)
       throw new TypeError("cover fetch failed:", res);
@@ -170,7 +225,15 @@ function download(id, btn) {
   res.forEach((elm) => {
     zip.file(type + "/" + elm.filename, elm.blob);
   });
-  zip.generateAsync({ type: "blob" }).then((blob) => {
+  zip.generateAsync({ type: "blob" }, (metadata) => {
+    if (metadata.currentFile) {
+      window.postMessage({
+	type: "compress",
+	filename: metadata.currentFile,
+	percent: Math.round(metadata.percent * 100) / 100
+      }, "*");
+    }
+  }).then((blob) => {
     saveAs(blob, title + ".zip");
     localStorage.setItem(id, true);
   });
@@ -203,9 +266,32 @@ function mutationHandler(evt) {
     });
     button.innerText = "click to save";
 
+    progressReceiver(button);
+
     article.appendChild(button);
     article.dataset.proceed = true;
   }
+}
+
+function progressReceiver(btn) {
+  let totalReceived = 0;
+  window.addEventListener("message", (evt) => {
+    let {type: type} = evt.data;
+
+    switch (type) {
+    case "progress":
+      let { amount: amount } = evt.data;
+      totalReceived += amount;
+      btn.innerText = `${totalReceived} bytes received`;
+      break;
+      
+    case "compress":
+      let { filename: filename, percent: percent } = evt.data;
+      btn.innerText = `compressing file: ${filename} (${percent}%)`;
+      break;
+      
+    }
+  });
 }
 
 main();
