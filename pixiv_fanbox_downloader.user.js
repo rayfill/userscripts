@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20200122
+// @version      20200310
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -11,7 +11,7 @@
 // @require      https://raw.githubusercontent.com/rayfill/GM_fetch/master/GM_fetch.js
 // @require      https://raw.githubusercontent.com/rayfill/gm-goodies/master/xhr-hook.js
 // @require      https://raw.githubusercontent.com/Stuk/jszip/master/dist/jszip.js
-// @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/master/dist/FileSaver.js
+// @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/b95a82a3ecb208fef5931e8931b2a8e67a834c02/dist/FileSaver.js
 // @connect      pixiv.net
 // @connect      pximg.net
 // @run-at       document-start
