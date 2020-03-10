@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         save tweet with media contents
 // @namespace    http://twitter.com/
-// @version      20200124
+// @version      20200310
 // @description  save tweet with media contents
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
@@ -11,7 +11,7 @@
 // @grant        GM_xmlhttpRequest
 // @require      https://raw.githubusercontent.com/rayfill/gm-goodies/master/xhr-hook.js
 // @require      https://raw.githubusercontent.com/rayfill/gm-goodies/master/gm-fetch.js
-// @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/master/dist/FileSaver.js
+// @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/b95a82a3ecb208fef5931e8931b2a8e67a834c02/dist/FileSaver.js
 // @require      https://raw.githubusercontent.com/Stuk/jszip/master/dist/jszip.js
 // @connect      twimg.com
 // @run-at       document-start
