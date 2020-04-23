@@ -4,7 +4,7 @@
 // @require      https://raw.githubusercontent.com/Stuk/jszip/master/dist/jszip.js
 // @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/b95a82a3ecb208fef5931e8931b2a8e67a834c02/dist/FileSaver.js
 // @require      https://raw.githubusercontent.com/axios/axios/master/dist/axios.js
-// @version      20200310
+// @version      20200423
 // @description  patreon downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
@@ -196,12 +196,13 @@
 
     for (let medium of media) {
       const url = medium.attributes.download_url;
-      jobs.push(saveContent(zip, url, (res) => {
-        const ct = res.headers["content-type"];
-        const path = `media/${counter++}.` + ext(ct);
-        mediapath.push(path);
-        return path;
-      }));
+      jobs.push(saveContent(zip, url, ((counter) => {
+        return (res) => {
+          const ct = res.headers["content-type"];
+          const path = `media/${counter}.` + ext(ct);
+          mediapath.push(path);
+          return path;
+        }})(counter++)));
     }
 
     for (let attachment of attachments) {
