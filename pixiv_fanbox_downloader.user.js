@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20200427
+// @version      20200527
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -23,6 +23,7 @@ const postListHomeURL = new RegExp("^https://api.fanbox.cc/post.listCreator.*$")
 const postURL = new RegExp("^https://api.fanbox.cc/post.info?postId=([0-9]+)$");
 const creatorURL = new RegExp("^https://api.fanbox.cc/creator.get?creatorId=(.+)$");
 const postIdPattern = new RegExp('^https://www.fanbox.cc/@([^/]+)/posts/([0-9]+)$');
+const postIdPattern2 = new RegExp('^https://([^.]+).fanbox.cc/posts/([0-9]+)$');
 const itemMap = new Map();
 
 function collectItems(items) {
@@ -82,9 +83,11 @@ function getArticleId(article) {
   let url = new URL(window.location.href);
   url.search = "";
   let match = postIdPattern.exec(url.toString());
-  if (match === null)
-    throw new TypeError("invalid url");
-
+  if (match === null) {
+    match = postIdPattern2.exec(url.toString());
+    if (match === null)
+      throw new TypeError("invalid url: "+ url.toString());
+  }
   return match[2];
 
 }
