@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         save tweet with media contents
 // @namespace    http://twitter.com/
-// @version      20200402
+// @version      20200626
 // @description  save tweet with media contents
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
@@ -159,6 +159,7 @@ unsafeWindow.document.createElement = (name) => {
   let tagName = name.toLowerCase();
 
   if (tagName === "article") {
+    elm.style.display = "block";
     let handler = () => {
       let id = undefined;
       let time = elm.querySelector('a time');
@@ -170,6 +171,7 @@ unsafeWindow.document.createElement = (name) => {
       if (id !== undefined) {
         let button = createElement('button');
         button.innerText = "click to save";
+        button.style.width = "100%";
         let alreadySaved = getState(id);
 
         if (alreadySaved === "true") {
@@ -187,7 +189,7 @@ unsafeWindow.document.createElement = (name) => {
 
         elm.appendChild(button);
         elm.addEventListener('mouseover', () => {
-          button.style.display = "inline";
+          button.style.display = "block";
         });
         elm.addEventListener('mouseleave', () => {
           button.style.display = "none";
