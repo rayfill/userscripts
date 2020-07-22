@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20200527
+// @version      20200722
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -19,9 +19,9 @@
 // @grant        unsafeWindow
 // ==/UserScript==
 const indexURL = new RegExp("^https://www.pixiv.net/ajax/fanbox/index$");
-const postListHomeURL = new RegExp("^https://api.fanbox.cc/post.listCreator.*$");
-const postURL = new RegExp("^https://api.fanbox.cc/post.info?postId=([0-9]+)$");
-const creatorURL = new RegExp("^https://api.fanbox.cc/creator.get?creatorId=(.+)$");
+const postListHomeURL = new RegExp("^https://api[.]fanbox[.]cc/post[.]listCreator.*$");
+const postURL = new RegExp("^https://api[.]fanbox[.]cc/post[.]info[?]postId=([0-9]+)$");
+const creatorURL = new RegExp("^https://api[.]fanbox[.]cc/creator[.]get?creatorId=(.+)$");
 const postIdPattern = new RegExp('^https://www.fanbox.cc/@([^/]+)/posts/([0-9]+)$');
 const postIdPattern2 = new RegExp('^https://([^.]+).fanbox.cc/posts/([0-9]+)$');
 const itemMap = new Map();
@@ -42,6 +42,7 @@ function main() {
     let match = null;
     let json = null;
     if (match = postListHomeURL.exec(url)) {
+      console.log("postlist");
       if (resType !== "json") {
         json = JSON.parse(content);
       } else {
@@ -51,6 +52,7 @@ function main() {
       collectItems(items);
 
     } else if (match = postURL.exec(url)) {
+      console.log("post");
       if (resType !== "json") {
         json = JSON.parse(content);
       } else {
@@ -59,7 +61,9 @@ function main() {
       let items = [json.body];
       collectItems(items);
 
-    } else if (match = creatorURL.exec(url)) {
+    }
+    /*else if (match = creatorURL.exec(url)) {
+      console.log("creator");
       if (resType !== "json") {
         json = JSON.parse(content);
       } else {
@@ -67,7 +71,7 @@ function main() {
       }
       let items = json.body.post.items;
       collectItems(items);
-    }
+    }*/
   });
 
   let observer = new MutationObserver((records, observer) => {
@@ -265,7 +269,9 @@ function mutationHandler(evt) {
     }
 
     let id = getArticleId(article);
+    console.log("id:", id);
     if (!itemMap.get(id)) {
+      console.log("can not find from itemmap");
       return;
     }
 
