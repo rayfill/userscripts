@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20200722
+// @version      20200815
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -121,6 +121,7 @@ function handleText(body) {
 function handleArticle(body) {
   console.log("body", body);
   let result = [];
+
   for (let imageId in body.imageMap) {
     let { id: id, extension: extension, originalUrl: originalUrl } = body.imageMap[imageId];
     result.push({
@@ -128,6 +129,14 @@ function handleArticle(body) {
       url: originalUrl
     });
   }
+  for (let fileId in body.fileMap) {
+    let { id: id, extension: extension, url: url } = body.fileMap[fileId];
+    result.push({
+      filename: `${id}.${extension}`,
+      url: url
+    });
+  }
+
   return result;
 }
 
@@ -160,6 +169,7 @@ function parseText(body) {
 
 function parseArticle(body) {
   let imageMap = body.imageMap;
+  let fileMap = body.fileMap;
   let blocks = body.blocks.map((block) => {
     switch (block.type) {
       case "p":
@@ -168,6 +178,10 @@ function parseArticle(body) {
 
       case "image":
         return `<img src="article/${block.imageId}.${imageMap[block.imageId].extension}"></img>`;
+        break;
+
+      case "file":
+        return `<video src="article/${block.fileId}.${fileMap[block.fileId].extension}"></video>`;
         break;
 
       default:
