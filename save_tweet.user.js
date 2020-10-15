@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         save tweet with media contents
 // @namespace    http://twitter.com/
-// @version      20201014
+// @version      20201015
 // @description  save tweet with media contents
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/save_tweet.user.js
@@ -206,7 +206,8 @@ xhrHook((xhr, ...args) => {
   let url = xhr.responseURL;
   //https://twitter.com/i/api/2/timeline/home.json
   if (url.startsWith("https://twitter.com/i/api/2/timeline/") ||
-      url.startsWith("https://twitter.com/i/api/2/rux\\.json") ||
+      // https://twitter.com/i/api/2/rux.json?
+      url.startsWith("https://twitter.com/i/api/2/rux.json") ||
       url.startsWith("https://twitter.com/i/api/2/notifications/")) {
 
     console.log("url:", url);
