@@ -3,8 +3,8 @@
 // @namespace    https://patreon.com/
 // @require      https://raw.githubusercontent.com/Stuk/jszip/master/dist/jszip.js
 // @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/b95a82a3ecb208fef5931e8931b2a8e67a834c02/dist/FileSaver.js
-// @require      https://raw.githubusercontent.com/axios/axios/master/dist/axios.js
-// @version      20200423
+// @require      https://raw.githubusercontent.com/rayfill/master/gm-goodies/gm-fetch.js
+// @version      20210802
 // @description  patreon downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
@@ -19,6 +19,7 @@
 
 (function() {
   'use strict';
+
   const localStorage = window.localStorage;
   const savedColor = "rgb(232, 91, 70)";
   const nonsavedColor = "lightgray";
@@ -26,6 +27,8 @@
   function rewriteText(str) {
     btn.textContent = str;
   }
+
+  console.log('patreon downloader script 1');
 
   const runtimeId = "PatreonImageDownloader_" + new Date().getTime().toString();
 
@@ -100,7 +103,7 @@
   const progressIndicator = (val) => {
     total += val;
     rewriteText(total.toLocaleString() + " bytes downloaded");
-  }
+  };
   const progress = (func) => {
     let prev = 0;
     return (e) => {
@@ -109,58 +112,25 @@
       func(cur);
     };
   };
-  const gmAdapter = (config) => {
-    console.log("call gmAdapter");
-    const method = config.method;
-    const url = config.url;
-    var request;
-    var details = {
-      url: url,
-      method: method,
-      onload: function (resp) {
-        var responseData = {};
-        var responseHeaders = {};
-        responseHeaders = parseHeaders(resp.responseHeaders);
-        responseData = resp.response;
 
-        var response = {
-          data: responseData,
-          status: resp.status,
-          statusText: resp.statusText,
-          headers: responseHeaders,
-          config: config,
-          request: request
-        };
-
-        Promise.resolve(response);
-      }
-    };
-    if (config.headers !== undefined) {
-      details.headers = config.headers;
-    }
-
-    return new Promise((resolve, reject) => {
-      request = GM_xmlhttpRequest(details);
-    });
-  };
-
-  let saveContent = (z, url, name, adapter) => {
+  let saveContent = (z, url, name) => {
     console.log("call saveConent");
 
-    var config = { responseType: 'arraybuffer', onDownloadProgress: progress(progressIndicator) };
-    if (adapter !== undefined) {
-      config.adapter = adapter;
-      var cookie = unsafeWindow.document.cookie;
-      config.headers = { 'Cookie': cookie };
-    }
+    var config = {
+//        responseType: 'arraybuffer'//,
+        onDownloadProgress: progress(progressIndicator)
+    };
     console.log("config:", config);
-    return axios.get(url, config).then((response) => {
-      console.log("save content:", response.request);
+    return GM_fetch(url, config).then((response) => {
+      console.log("save content:", response.ok);
+      if (!response.ok || response.status < 200 || response.status >= 400) {
+        throw new NetworkError();
+      }
       if (typeof name == "function") {
         name = name(response);
       }
 
-      z.file(name, response.data, { compression: "STORE" });
+      z.file(name, response.blob(), { compression: "STORE" });
     });
   };
 
@@ -191,6 +161,7 @@
 
     const ext = (ct) => {
       const m = new RegExp("^image/(.*)$").exec(ct);
+      console.log(`ct: ${ct}, m: ${m}`);
       return m !== null && m[1];
     };
 
@@ -198,11 +169,11 @@
       const url = medium.attributes.download_url;
       jobs.push(saveContent(zip, url, ((counter) => {
         return (res) => {
-          const ct = res.headers["content-type"];
+          const ct = res.headers.get("content-type");
           const path = `media/${counter}.` + ext(ct);
           mediapath.push(path);
           return path;
-        }})(counter++)));
+        };})(counter++)));
     }
 
     for (let attachment of attachments) {
@@ -215,7 +186,7 @@
     for (let idx = 0; idx < imgs.length; idx++) {
       const url = imgs[idx].src;
       jobs.push(saveContent(zip, url, (res) => {
-        const ct = res.headers["content-type"];
+        const ct = res.headers.get("content-type");
         const imgpath = `content/${idx}.` + ext(ct);
         imgs[idx].dataset.src = imgpath;
         imgs[idx].src = "javascript:false";
@@ -303,7 +274,7 @@
       btn.disabled = false;
       rewriteText(text);
     }
-  }
+  };
   document.addEventListener('DOMContentLoaded', (ev) => {
     const buttonCaption = "save with linked object";
     let isSaved = localStorage.getItem(window.location.href) === "true";
