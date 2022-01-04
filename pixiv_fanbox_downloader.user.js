@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20200815
+// @version      20220104
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -36,12 +36,12 @@ function collectItems(items) {
 }
 
 function main() {
+  // eslint-disable-next-line no-undef
   xhrHook2((url, resType, content) => {
 
     console.log("url:", url);
-    let match = null;
     let json = null;
-    if (match = postListHomeURL.exec(url)) {
+    if (postListHomeURL.exec(url)) {
       console.log("postlist");
       if (resType !== "json") {
         json = JSON.parse(content);
@@ -51,7 +51,7 @@ function main() {
       let items = json.body.items;
       collectItems(items);
 
-    } else if (match = postURL.exec(url)) {
+    } else if (postURL.exec(url)) {
       console.log("post");
       if (resType !== "json") {
         json = JSON.parse(content);
@@ -74,7 +74,7 @@ function main() {
     }*/
   });
 
-  let observer = new MutationObserver((records, observer) => {
+  let observer = new MutationObserver((_records, _observer) => {
     window.postMessage({ type: "mutation" }, "*");
   });
 
@@ -83,14 +83,15 @@ function main() {
   observer.observe(document, { childList: true, subtree: true });
 }
 
-function getArticleId(article) {
+function getArticleId(_article) {
   let url = new URL(window.location.href);
   url.search = "";
   let match = postIdPattern.exec(url.toString());
   if (match === null) {
     match = postIdPattern2.exec(url.toString());
-    if (match === null)
+    if (match === null) {
       throw new TypeError("invalid url: "+ url.toString());
+    }
   }
   return match[2];
 
@@ -101,20 +102,20 @@ function handleImage(body) {
     return {
       filename: `${idx}.${elm.extension}`,
       url: elm.originalUrl
-    }
+    };
   });
 }
 
 function handleFile(body) {
-  return body.files.map((elm, idx) => {
+  return body.files.map((elm) => {
     return {
       filename: `${elm.name}.${elm.extension}`,
       url: elm.url
-    }
+    };
   });
 }
 
-function handleText(body) {
+function handleText(_body) {
   return [];
 }
 
@@ -154,9 +155,11 @@ function fetchResources(resources) {
   return resources.map((elm) => {
     return {
       filename: elm.filename,
+      // eslint-disable-next-line no-undef
       blob: GM_fetch(elm.url, { onprogress: makeProgressHandler()}).then((res) => {
-        if (!res.ok)
+        if (!res.ok) {
           throw new TypeError("resource fetch failed", res);
+        }
         return res.blob();
       })
     };
@@ -174,26 +177,27 @@ function parseArticle(body) {
     switch (block.type) {
       case "p":
         return `<p>${block.text}</p>`;
-        break;
+
+      case "header":
+      	return `<h2>${block.text}</h2>`;
 
       case "image":
         return `<img src="article/${block.imageId}.${imageMap[block.imageId].extension}"></img>`;
-        break;
 
       case "file":
         return `<video src="article/${block.fileId}.${fileMap[block.fileId].extension}"></video>`;
-        break;
 
       default:
         alert("unknown block type:", block.type);
-        debugger;
+      	debugger;
+	    return "";
     }
   });
 
   return '<!DOCTYPE html><head><meta charset="UTF-8"/></head><body>' + blocks.join('') + "</body></html>";
 }
 
-function download(id, btn) {
+function download(id) {
   let info = itemMap.get(id);
   console.log("info", info);
 
@@ -232,6 +236,7 @@ function download(id, btn) {
 
   console.log("resources:", resources);
   let res = fetchResources(resources);
+  // eslint-disable-next-line no-undef
   let zip = new JSZip();
   if (type === "article") {
     let html = parseArticle(body);
@@ -243,6 +248,7 @@ function download(id, btn) {
     zip.file("message.txt", text);
   }
   if (cover != null) {
+    // eslint-disable-next-line no-undef
     zip.file("cover.jpg", GM_fetch(cover).then((res) => {
       if (!res.ok) {
         throw new TypeError("cover fetch failed:", res);
@@ -262,7 +268,8 @@ function download(id, btn) {
       }, "*");
     }
   }).then((blob) => {
-    saveAs(blob, title + ".zip");
+    // eslint-disable-next-line no-undef
+    saveAs(blob, `${user.userId}_${id}_${user.name}_${title}.zip`);
     localStorage.setItem(id, true);
   });
 }
@@ -291,8 +298,8 @@ function mutationHandler(evt) {
 
     let button = document.createElement('button');
     button.style.backgroundColor = localStorage.getItem(id) ? proceedColor : unproceedColor;
-    button.addEventListener('click', (evt) => {
-      download(id, button);
+    button.addEventListener('click', () => {
+      download(id);
     });
     button.innerText = "click to save";
 
