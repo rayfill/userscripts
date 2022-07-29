@@ -9,7 +9,7 @@
 // @match        https://*.fanbox.cc/*
 // @require      https://raw.githubusercontent.com/rayfill/GM_fetch/master/GM_fetch.js
 // @require      https://raw.githubusercontent.com/rayfill/gm-goodies/master/xhr-hook.js
-// @require      https://raw.githubusercontent.com/Stuk/jszip/master/dist/jszip.js
+// @require      https://raw.githubusercontent.com/Stuk/jszip/v3.2.2/dist/jszip.js
 // @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/b95a82a3ecb208fef5931e8931b2a8e67a834c02/dist/FileSaver.js
 // @connect      pixiv.net
 // @connect      pximg.net
