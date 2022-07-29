@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20220104
+// @version      20220729
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -90,7 +90,7 @@ function getArticleId(_article) {
   if (match === null) {
     match = postIdPattern2.exec(url.toString());
     if (match === null) {
-      throw new TypeError("invalid url: "+ url.toString());
+      throw new TypeError("invalid url: " + url.toString());
     }
   }
   return match[2];
@@ -156,7 +156,7 @@ function fetchResources(resources) {
     return {
       filename: elm.filename,
       // eslint-disable-next-line no-undef
-      blob: GM_fetch(elm.url, { onprogress: makeProgressHandler()}).then((res) => {
+      blob: GM_fetch(elm.url, { onprogress: makeProgressHandler() }).then((res) => {
         if (!res.ok) {
           throw new TypeError("resource fetch failed", res);
         }
@@ -173,13 +173,15 @@ function parseText(body) {
 function parseArticle(body) {
   let imageMap = body.imageMap;
   let fileMap = body.fileMap;
+  let urlEmbedMap = body.urlEmbedMap;
+
   let blocks = body.blocks.map((block) => {
     switch (block.type) {
       case "p":
         return `<p>${block.text}</p>`;
 
       case "header":
-      	return `<h2>${block.text}</h2>`;
+        return `<h2>${block.text}</h2>`;
 
       case "image":
         return `<img src="article/${block.imageId}.${imageMap[block.imageId].extension}"></img>`;
@@ -187,10 +189,13 @@ function parseArticle(body) {
       case "file":
         return `<video src="article/${block.fileId}.${fileMap[block.fileId].extension}"></video>`;
 
+      case "url_embed":
+        return `<a href="${urlEmbedMap[block.urlEmbedId].url}">${urlEmbedMap[block.urlEmbedId].host}</a>`;
+
       default:
         alert("unknown block type:", block.type);
-      	debugger;
-	    return "";
+        debugger;
+        return "";
     }
   });
 
@@ -313,7 +318,7 @@ function mutationHandler(evt) {
 function progressReceiver(btn) {
   let totalReceived = 0;
   window.addEventListener("message", (evt) => {
-    let {type: type} = evt.data;
+    let { type: type } = evt.data;
 
     switch (type) {
       case "progress": {
