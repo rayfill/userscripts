@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20220729.1
+// @version      20221005.0
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -18,6 +18,7 @@
 // @grant        GM_xmlhttpRequest
 // @grant        unsafeWindow
 // ==/UserScript==
+
 const indexURL = new RegExp("^https://www.pixiv.net/ajax/fanbox/index$");
 const postListHomeURL = new RegExp("^https://api[.]fanbox[.]cc/post[.]listCreator.*$");
 const postURL = new RegExp("^https://api[.]fanbox[.]cc/post[.]info[?]postId=([0-9]+)$");
@@ -86,6 +87,7 @@ function main() {
 function getArticleId(_article) {
   let url = new URL(window.location.href);
   url.search = "";
+  url.hash = "";
   let match = postIdPattern.exec(url.toString());
   if (match === null) {
     match = postIdPattern2.exec(url.toString());
@@ -204,6 +206,7 @@ function parseArticle(body) {
 
 function download(id) {
   let info = itemMap.get(id);
+  let lastupdate = new Date(info.updatedDatetime).getTime();
   console.log("info", info);
 
   let {
@@ -274,7 +277,7 @@ function download(id) {
     }
   }).then((blob) => {
     // eslint-disable-next-line no-undef
-    saveAs(blob, `${user.userId}_${id}_${user.name}_${title}.zip`);
+    saveAs(blob, `${user.userId}_${id}_${lastupdate}_${user.name}_${title}.zip`);
     localStorage.setItem(id, true);
   });
 }
@@ -307,6 +310,7 @@ function mutationHandler(evt) {
       download(id);
     });
     button.innerText = "click to save";
+    button.id = 'pixiv_fanbox_downloader';
 
     progressReceiver(button);
 
