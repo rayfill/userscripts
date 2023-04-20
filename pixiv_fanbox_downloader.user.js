@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20221005.0
+// @version      20230420.0
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
