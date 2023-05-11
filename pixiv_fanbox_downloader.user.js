@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20230420.0
+// @version      20230511.0
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -176,6 +176,7 @@ function parseArticle(body) {
   let imageMap = body.imageMap;
   let fileMap = body.fileMap;
   let urlEmbedMap = body.urlEmbedMap;
+  let embedMap = body.embedMap;
 
   let blocks = body.blocks.map((block) => {
     switch (block.type) {
@@ -194,8 +195,15 @@ function parseArticle(body) {
       case "url_embed":
         return `<a href="${urlEmbedMap[block.urlEmbedId].url}">${urlEmbedMap[block.urlEmbedId].host}</a>`;
 
+      case "embed": {
+        const embedItem = embedMap[block.embedId];
+        const contentId = embedItem.contentId;
+        const serviceProvider = embedItem.serviceProvider;
+        return `<div style='border: solid; border-color: black; border-radius: 5px;'>embed block: ${serviceProvider}:${contentId}</div>`;
+      }
+
       default:
-        alert("unknown block type:", block.type);
+        alert(`unknown block type: ${block.type}`);
         debugger;
         return "";
     }
