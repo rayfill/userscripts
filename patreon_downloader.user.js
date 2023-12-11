@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Patreon downloader
 // @namespace    https://patreon.com/
-// @require      https://raw.githubusercontent.com/Stuk/jszip/master/dist/jszip.js
+// @require      https://raw.githubusercontent.com/Stuk/jszip/v3.7.1/dist/jszip.js
 // @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/b95a82a3ecb208fef5931e8931b2a8e67a834c02/dist/FileSaver.js
 // @require      https://raw.githubusercontent.com/rayfill/gm-goodies/master/gm-fetch.js
-// @version      20210802.01
+// @version      20231002
 // @description  patreon downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
@@ -26,6 +26,18 @@
   var btn = document.createElement('button');
   function rewriteText(str) {
     btn.textContent = str;
+  }
+
+  function getContent() {
+      const tag = document.querySelector('span[data-tag=post-title');
+      if (tag !== null) {
+          return tag.parentElement.parentElement.parentElement;
+      }
+      return null;
+  }
+  function getButtonPlace() {
+      const tag = (document.querySelector('div[data-tag=post-details]') ?? document.querySelector('div[data-tag=post-tags]'));
+      return tag;
   }
 
   console.log('patreon downloader script 1');
@@ -152,7 +164,7 @@
     var mediapath = [];
     var attachments = extract(included, "attachment");
     var attachmentspath = [];
-    var content = document.querySelector('div[data-tag=post-content]').cloneNode(true);
+    var content = getContent().cloneNode(true); //(document.querySelector('div[data-tag=post-tags]') ?? document.querySelector('div[data-tag=post-details]')).previousElementSibling.cloneNode(true);
     var imgs = content.querySelectorAll('img');
 
     var counter = 0;
@@ -237,8 +249,8 @@
       .then(() => {
       console.log("save zip file");
 
-      let btn = content.querySelector("#" + runtimeId);
-      btn.parentNode.removeChild(btn);
+      //let btn = content.querySelector("#" + runtimeId);
+      //btn.parentNode.removeChild(btn);
 
       zip.file("index.html", htmlPrefix + embedImg(mediapath) +
                content.innerHTML + embedAttach(attachmentspath) + htmlPostfix);
@@ -283,7 +295,7 @@
     btn.name = "save";
     btn.onclick = clicked;
     btn.style.backgroundColor = isSaved ? savedColor : nonsavedColor;
-    var content = document.querySelector('div[data-tag="post-content"]');
+    var content = getButtonPlace(); //(document.querySelector('div[data-tag="post-tags"]') ?? document.querySelector('div[data-tag=post-details]')).previousElementSibling;
     rewriteText("save with linked object");
     content.appendChild(btn);
   });
