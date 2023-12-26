@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20230511.0
+// @version      20231225.0
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -153,19 +153,86 @@ function makeProgressHandler() {
   };
 }
 
-function fetchResources(resources) {
-  return resources.map((elm) => {
-    return {
-      filename: elm.filename,
-      // eslint-disable-next-line no-undef
-      blob: GM_fetch(elm.url, { onprogress: makeProgressHandler() }).then((res) => {
-        if (!res.ok) {
-          throw new TypeError("resource fetch failed", res);
-        }
-        return res.blob();
-      })
-    };
-  });
+class Waiter {
+  waiter = [];
+
+  async wait() {
+    await new Promise((resolve) => {
+      this.waiter.push(resolve);
+    });
+  }
+
+  wakeup() {
+    this.waiter.forEach((resolver) => resolver());
+    this.waiter.length = 0;
+  }
+}
+
+class Semaphore {
+  current = 0;
+  limit;
+  waiter = new Waiter();
+
+  constructor(limit = 1) {
+    this.limit = limit;
+  }
+
+  raise() {
+    this.waiter.wakeup();
+  }
+
+  wait() {
+    return this.waiter.wait();
+  }
+
+  async acquire() {
+    if (this.current < this.limit) {
+      ++this.current;
+      return this.limit - this.current;
+    }
+    await this.wait();
+    return await this.acquire();
+  }
+
+  release() {
+    if (this.current === 0) {
+      throw new Error('semaphore does not acquired');
+    }
+    const current = --this.current;
+    this.raise();
+    return current;
+  }
+}
+
+const semaphore = new Semaphore(4);
+
+async function fetchResources(resources) {
+  return Promise.allSettled(resources.map(async (elm) => {
+    try {
+      await semaphore.acquire();
+      const res = await GM_fetch(elm.url, { onprogress: makeProgressHandler() });
+      if (!res.ok) {
+        console.log('error', elm.url);
+        throw new TypeError("resource fetch failed", res);
+      }
+      const blob = await res.blob();
+      const contentDisposition = res.headers.get('content-disposition');
+      const filename = contentDisposition !== null ? getContentDispositionName(contentDisposition) : elm.filename;
+
+      return {
+        filename: filename,
+        // eslint-disable-next-line no-undef
+        blob: blob,
+      };
+    } catch (e) {
+      return {
+        error: e,
+        url: elm.url,
+      };
+    } finally {
+      semaphore.release();
+    }
+  }));
 }
 
 function parseText(body) {
@@ -212,7 +279,7 @@ function parseArticle(body) {
   return '<!DOCTYPE html><head><meta charset="UTF-8"/></head><body>' + blocks.join('') + "</body></html>";
 }
 
-function download(id) {
+async function download(id) {
   let info = itemMap.get(id);
   let lastupdate = new Date(info.updatedDatetime).getTime();
   console.log("info", info);
@@ -251,7 +318,7 @@ function download(id) {
   }
 
   console.log("resources:", resources);
-  let res = fetchResources(resources);
+  let res = await fetchResources(resources);
   // eslint-disable-next-line no-undef
   let zip = new JSZip();
   if (type === "article") {
@@ -265,17 +332,22 @@ function download(id) {
   }
   if (cover != null) {
     // eslint-disable-next-line no-undef
-    zip.file("cover.jpg", GM_fetch(cover).then((res) => {
-      if (!res.ok) {
-        throw new TypeError("cover fetch failed:", res);
-      }
-      return res.blob();
-    }));
+    const coverRes = await GM_fetch(cover);
+    if (!coverRes.ok) {
+      throw new TypeError("cover fetch failed:", res);
+    }
+    const blob = await coverRes.blob();
+
+    zip.file("cover.jpg", blob);
   }
   res.forEach((elm) => {
-    zip.file(type + "/" + elm.filename, elm.blob);
+    if ('filename' in elm) {
+      zip.file(type + "/" + elm.filename, elm.blob);
+    } else {
+      console.log(elm);
+    }
   });
-  zip.generateAsync({ type: "blob" }, (metadata) => {
+  const blob = await zip.generateAsync({ type: "blob" }, (metadata) => {
     if (metadata.currentFile) {
       window.postMessage({
         type: "compress",
@@ -283,11 +355,10 @@ function download(id) {
         percent: Math.round(metadata.percent * 100) / 100
       }, "*");
     }
-  }).then((blob) => {
-    // eslint-disable-next-line no-undef
-    saveAs(blob, `${user.userId}_${id}_${lastupdate}_${user.name}_${title}.zip`);
-    localStorage.setItem(id, true);
   });
+  // eslint-disable-next-line no-undef
+  saveAs(blob, `${user.userId}_${id}_${lastupdate}_${user.name}_${title}.zip`);
+  localStorage.setItem(id, true);
 }
 
 const proceedColor = "rgb(0, 150, 250)";
@@ -297,25 +368,29 @@ function mutationHandler(evt) {
   if (type !== "mutation") {
     return;
   }
-  console.log("mutation");
+  //console.log("mutation");
 
   let article = document.querySelector('article');
+  //console.log('article', article);
   if (article !== null) {
     if (article.dataset.proceed) {
       return;
     }
 
     let id = getArticleId(article);
-    console.log("id:", id);
     if (!itemMap.get(id)) {
-      console.log("can not find from itemmap");
+      console.log(`id: ${id}, can not find from itemmap`);
       return;
     }
 
     let button = document.createElement('button');
     button.style.backgroundColor = localStorage.getItem(id) ? proceedColor : unproceedColor;
-    button.addEventListener('click', () => {
-      download(id);
+    button.addEventListener('click', async () => {
+      try {
+        await download(id);
+      } catch (e) {
+        console.error(e);
+      }
     });
     button.innerText = "click to save";
     button.id = 'pixiv_fanbox_downloader';
@@ -351,3 +426,25 @@ function progressReceiver(btn) {
 
 main();
 console.log("pixiv fanbox downloader loaded");
+
+function decodeRFC5987(decodeTarget) {
+  if (decodeTarget.startsWith("UTF-8''")) {
+    return decodeURIComponent(decodeTarget.substring("UTF-8''".length));
+  }
+  return decodeTarget;
+}
+
+function getContentDispositionName(headerLine) {
+  const dispositionMap = new Map();
+  const dispositions = headerLine.split(';').map((line) => line.trim()).forEach((line) => {
+    const splitPos = line.search('=');
+    const key = splitPos === -1 ? line : line.substring(0, splitPos);
+    const value = splitPos === -1 ? undefined : line.substring(splitPos + 1);
+    dispositionMap.set(key, value);
+  });
+
+  const filenameStar = dispositionMap.get('filename*');
+  const filename = dispositionMap.get('filename');
+  return (filenameStar !== undefined && decodeRFC5987(filenameStar)) ?? filename;
+}
+
