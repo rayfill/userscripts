@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20231225.0
+// @version      20240101.0
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -102,6 +102,8 @@ function getArticleId(_article) {
 function handleImage(body) {
   return body.images.map((elm, idx) => {
     return {
+      id: elm.id,
+      extension: elm.extension,
       filename: `${idx}.${elm.extension}`,
       url: elm.originalUrl
     };
@@ -111,6 +113,8 @@ function handleImage(body) {
 function handleFile(body) {
   return body.files.map((elm) => {
     return {
+      id: elm.id,
+      extension: elm.extension,
       filename: `${elm.name}.${elm.extension}`,
       url: elm.url
     };
@@ -128,6 +132,8 @@ function handleArticle(body) {
   for (let imageId in body.imageMap) {
     let { id: id, extension: extension, originalUrl: originalUrl } = body.imageMap[imageId];
     result.push({
+      id: id,
+      extension: extension,
       filename: `${id}.${extension}`,
       url: originalUrl
     });
@@ -135,6 +141,8 @@ function handleArticle(body) {
   for (let fileId in body.fileMap) {
     let { id: id, extension: extension, url: url } = body.fileMap[fileId];
     result.push({
+      id: id,
+      extension: extension,
       filename: `${id}.${extension}`,
       url: url
     });
@@ -218,8 +226,12 @@ async function fetchResources(resources) {
       const blob = await res.blob();
       const contentDisposition = res.headers.get('content-disposition');
       const filename = contentDisposition !== null ? getContentDispositionName(contentDisposition) : elm.filename;
+      console.log(`filename: ${filename}`);
+      console.log(elm);
 
       return {
+        id: elm.id,
+        extension: elm.extension,
         filename: filename,
         // eslint-disable-next-line no-undef
         blob: blob,
@@ -239,11 +251,12 @@ function parseText(body) {
   return body.text;
 }
 
-function parseArticle(body) {
+function parseArticle(body, res) {
   let imageMap = body.imageMap;
   let fileMap = body.fileMap;
   let urlEmbedMap = body.urlEmbedMap;
   let embedMap = body.embedMap;
+  const values = res.filter(res => res.status === "fulfilled").map(res => res.value);
 
   let blocks = body.blocks.map((block) => {
     switch (block.type) {
@@ -256,8 +269,15 @@ function parseArticle(body) {
       case "image":
         return `<img src="article/${block.imageId}.${imageMap[block.imageId].extension}"></img>`;
 
-      case "file":
-        return `<video src="article/${block.fileId}.${fileMap[block.fileId].extension}"></video>`;
+    case "file": {
+      const id = block.fileId;
+      const found = values.find(value => value.id === id);
+      if (found === undefined) {
+        return `<a href="article/${block.fileId}.${fileMap[block.fileId].extension}">${blok.fileId}.${fileMap[block.fileId].extension}</a>`;
+      } else {
+        return `<a href="article/${found.filename}">${found.filename}</a>`;
+      }
+    }
 
       case "url_embed":
         return `<a href="${urlEmbedMap[block.urlEmbedId].url}">${urlEmbedMap[block.urlEmbedId].host}</a>`;
@@ -322,10 +342,10 @@ async function download(id) {
   // eslint-disable-next-line no-undef
   let zip = new JSZip();
   if (type === "article") {
-    let html = parseArticle(body);
+    let html = parseArticle(body, res);
     zip.file("message.html", html);
   } else if (type === "text") {
-    let text = parseText(body);
+    let text = parseText(body, res);
     zip.file("message.txt", text);
   } else {
     zip.file("message.txt", text);
@@ -340,11 +360,17 @@ async function download(id) {
 
     zip.file("cover.jpg", blob);
   }
-  res.forEach((elm) => {
-    if ('filename' in elm) {
-      zip.file(type + "/" + elm.filename, elm.blob);
+
+  res.forEach(({ status, value }, index) => {
+    if (status === 'rejected') {
+      console.error(`rejected ${index}th resource fetched`);
+      return;
+    }
+    if ('filename' in value) {
+      zip.file(type + "/" + value.filename, value.blob);
     } else {
-      console.log(elm);
+      debugger;
+      alert(`invalid response format: ${JSON.stringify(value, null, 2)}`);
     }
   });
   const blob = await zip.generateAsync({ type: "blob" }, (metadata) => {
