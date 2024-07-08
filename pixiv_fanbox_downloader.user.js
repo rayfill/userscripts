@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         pixiv fanbox resource saver
 // @namespace    https://pixiv.fanbox.net/
-// @version      20240101.0
+// @version      20240708.0
 // @description  pixiv fanbox article downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/pixiv_fanbox_downloader.user.js
@@ -259,40 +259,44 @@ function parseArticle(body, res) {
   const values = res.filter(res => res.status === "fulfilled").map(res => res.value);
 
   let blocks = body.blocks.map((block) => {
-    switch (block.type) {
-      case "p":
-        return `<p>${block.text}</p>`;
+    try {
+      switch (block.type) {
+        case "p":
+          return `<p>${block.text}</p>`;
 
-      case "header":
-        return `<h2>${block.text}</h2>`;
+        case "header":
+          return `<h2>${block.text}</h2>`;
 
-      case "image":
-        return `<img src="article/${block.imageId}.${imageMap[block.imageId].extension}"></img>`;
+        case "image":
+          return `<img src="article/${block.imageId}.${imageMap[block.imageId].extension}"></img>`;
 
-    case "file": {
-      const id = block.fileId;
-      const found = values.find(value => value.id === id);
-      if (found === undefined) {
-        return `<a href="article/${block.fileId}.${fileMap[block.fileId].extension}">${blok.fileId}.${fileMap[block.fileId].extension}</a>`;
-      } else {
-        return `<a href="article/${found.filename}">${found.filename}</a>`;
+        case "file": {
+          const id = block.fileId;
+          const found = values.find(value => value.id === id);
+          if (found === undefined) {
+            return `<a href="article/${block.fileId}.${fileMap[block.fileId].extension}">${blok.fileId}.${fileMap[block.fileId].extension}</a>`;
+          } else {
+            return `<a href="article/${found.filename}">${found.filename}</a>`;
+          }
+        }
+
+        case "url_embed":
+          return `<a href="${urlEmbedMap[block.urlEmbedId].url}">${urlEmbedMap[block.urlEmbedId].host}</a>`;
+
+        case "embed": {
+          const embedItem = embedMap[block.embedId];
+          const contentId = embedItem.contentId;
+          const serviceProvider = embedItem.serviceProvider;
+          return `<div style='border: solid; border-color: black; border-radius: 5px;'>embed block: ${serviceProvider}:${contentId}</div>`;
+        }
+
+        default:
+          alert(`unknown block type: ${block.type}`);
+          debugger;
+          return "";
       }
-    }
-
-      case "url_embed":
-        return `<a href="${urlEmbedMap[block.urlEmbedId].url}">${urlEmbedMap[block.urlEmbedId].host}</a>`;
-
-      case "embed": {
-        const embedItem = embedMap[block.embedId];
-        const contentId = embedItem.contentId;
-        const serviceProvider = embedItem.serviceProvider;
-        return `<div style='border: solid; border-color: black; border-radius: 5px;'>embed block: ${serviceProvider}:${contentId}</div>`;
-      }
-
-      default:
-        alert(`unknown block type: ${block.type}`);
-        debugger;
-        return "";
+    } catch (e) {
+      alert(`error on ${JSON.stringify(block)}: ${e.message}`);
     }
   });
 
