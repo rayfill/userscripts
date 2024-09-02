@@ -4,7 +4,7 @@
 // @require      https://raw.githubusercontent.com/Stuk/jszip/v3.7.1/dist/jszip.js
 // @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/b95a82a3ecb208fef5931e8931b2a8e67a834c02/dist/FileSaver.js
 // @require      https://raw.githubusercontent.com/rayfill/gm-goodies/master/gm-fetch.js
-// @version      20231002
+// @version      20240902.1
 // @description  patreon downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
@@ -35,9 +35,12 @@
       }
       return null;
   }
-  function getButtonPlace() {
-      const tag = (document.querySelector('div[data-tag=post-details]') ?? document.querySelector('div[data-tag=post-tags]'));
-      return tag;
+  function getButtonPlaceAppender() {
+    const comment = document.querySelector('div[data-tag="content-card-comment-thread-container"]');
+    const content = comment.parentElement;
+    return (btn) => {
+      content.insertBefore(btn, comment);
+    };
   }
 
   console.log('patreon downloader script 1');
@@ -247,30 +250,31 @@
     };
     Promise.all(jobs)
       .then(() => {
-      console.log("save zip file");
+        console.log("save zip file");
 
-      //let btn = content.querySelector("#" + runtimeId);
-      //btn.parentNode.removeChild(btn);
+        //let btn = content.querySelector("#" + runtimeId);
+        //btn.parentNode.removeChild(btn);
 
-      zip.file("index.html", htmlPrefix + embedImg(mediapath) +
-               content.innerHTML + embedAttach(attachmentspath) + htmlPostfix);
-      zip.generateAsync({type: "blob"}, (metadata) => {
-        let message = metadata.percent.toFixed(2) + "%";
-        if (metadata.currentFile) {
-          message = message + " file: " + metadata.currentFile;
-        }
-        rewriteText(message);
-      }).then((content) => {
-        console.log("save as");
-        let yyyymm = (created.getYear() + 1900).toString().padStart(4, "0")
-        + (created.getMonth() + 1).toString().padStart(2, "0");
-        saveAs(content, yyyymm + "_" + articleId + "_" + title + ".zip");
-        localStorage.setItem(window.location.href, true);
-        btn.style.backgroundColor = savedColor;
-      }).catch((err) => {
-        console.log("error:", err);
-      });
-    })
+        zip.file("index.html", htmlPrefix + embedImg(mediapath) +
+          content.innerHTML + embedAttach(attachmentspath) + htmlPostfix);
+        console.log('generateAsync');
+        zip.generateAsync({ type: "blob" }, (metadata) => {
+          let message = metadata.percent.toFixed(2) + "%";
+          if (metadata.currentFile) {
+            message = message + " file: " + metadata.currentFile;
+          }
+          rewriteText(message);
+        }).then((content) => {
+          console.log("save as");
+          let yyyymm = (created.getYear() + 1900).toString().padStart(4, "0")
+            + (created.getMonth() + 1).toString().padStart(2, "0");
+          saveAs(content, yyyymm + "_" + articleId + "_" + title + ".zip");
+          localStorage.setItem(window.location.href, true);
+          btn.style.backgroundColor = savedColor;
+        }).catch((err) => {
+          console.log("error:", err);
+        });
+      })
       .catch((rej) => {
       console.log("one or more jobs failed.", rej);
       window.alert("one or more jobs failed.", rej);
@@ -288,15 +292,17 @@
     }
   };
   document.addEventListener('DOMContentLoaded', (ev) => {
-    const buttonCaption = "save with linked object";
-    let isSaved = localStorage.getItem(window.location.href) === "true";
-    btn.id = runtimeId;
-    btn.type = 'button';
-    btn.name = "save";
-    btn.onclick = clicked;
-    btn.style.backgroundColor = isSaved ? savedColor : nonsavedColor;
-    var content = getButtonPlace(); //(document.querySelector('div[data-tag="post-tags"]') ?? document.querySelector('div[data-tag=post-details]')).previousElementSibling;
-    rewriteText("save with linked object");
-    content.appendChild(btn);
+    window.setTimeout(() => {
+      const buttonCaption = "save with linked object";
+      let isSaved = localStorage.getItem(window.location.href) === "true";
+      btn.id = runtimeId;
+      btn.type = 'button';
+      btn.name = "save";
+      btn.onclick = clicked;
+      btn.style.backgroundColor = isSaved ? savedColor : nonsavedColor;
+      var appender = getButtonPlaceAppender();
+      rewriteText(buttonCaption);
+      appender(btn);
+    }, 3000);
   });
 })();
