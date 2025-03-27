@@ -4,7 +4,7 @@
 // @require      https://raw.githubusercontent.com/Stuk/jszip/v3.7.1/dist/jszip.js
 // @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/b95a82a3ecb208fef5931e8931b2a8e67a834c02/dist/FileSaver.js
 // @require      https://raw.githubusercontent.com/rayfill/gm-goodies/master/gm-fetch.js
-// @version      20240930.0
+// @version      20250327.0
 // @description  patreon downloader
 // @downloadURL  https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
 // @updateURL    https://raw.githubusercontent.com/rayfill/userscripts/master/patreon_downloader.user.js
@@ -152,8 +152,11 @@
   let save = () => {
     total = 0;
 
-    let articleId = unsafeWindow.patreon.bootstrap.post.data.id;
-    let included = unsafeWindow.patreon.bootstrap.post.included;
+    const data = JSON.parse(document.querySelector('#__NEXT_DATA__')?.textContent);
+    const articleId = data.props.pageProps.bootstrapEnvelope.pageBootstrap.post.data.id;
+    const included = data.props.pageProps.bootstrapEnvelope.pageBootstrap.post.included;
+    //let articleId = unsafeWindow.patreon.bootstrap.post.data.id;
+    //let included = unsafeWindow.patreon.bootstrap.post.included;
     const extract = (included, type) => {
       let result = [];
       for (let include of included) {
@@ -224,8 +227,11 @@
           embScr.toString() + ")();</script></head><body>";
     const htmlPostfix = "</body></html>";
 
-    var title = unsafeWindow.patreon.bootstrap.post.data.attributes.title.replace(new RegExp("[.]$"), "");
-    var created = new Date(unsafeWindow.patreon.bootstrap.post.data.attributes.created_at);
+    //const articleId = data.props.pageProps.bootstrapEnvelope.pageBootstrap.post.data.id;
+    const title = data.props.pageProps.bootstrapEnvelope.pageBootstrap.post.data.attributes.title.replace(new RegExp("[.]$"), "");
+    const created = new Date(data.props.pageProps.bootstrapEnvelope.pageBootstrap.post.data.attributes.created_at);
+    //var title = unsafeWindow.patreon.bootstrap.post.data.attributes.title.replace(new RegExp("[.]$"), "");
+    //var created = new Date(unsafeWindow.patreon.bootstrap.post.data.attributes.created_at);
 
     const embedImg = (path) => {
       path.sort();
