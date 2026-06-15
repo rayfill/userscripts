@@ -4,12 +4,13 @@
 // @require      https://raw.githubusercontent.com/Stuk/jszip/v3.7.1/dist/jszip.js
 // @require      https://raw.githubusercontent.com/eligrey/FileSaver.js/b95a82a3ecb208fef5931e8931b2a8e67a834c02/dist/FileSaver.js
 // @require      https://raw.githubusercontent.com/rayfill/gm-goodies/master/gm-fetch.js
-// @version      20260327.1
+// @version      20260615.0
 // @description  patreon downloader
 // @downloadURL  https://github.com/rayfill/userscripts/raw/refs/heads/master/patreon_downloader.user.js
 // @updateURL    https://github.com/rayfill/userscripts/raw/refs/heads/master/patreon_downloader.user.js
 // @author       rayfill
 // @match        https://www.patreon.com/posts/*
+// @match        https://www.patreon.com/*/posts/*
 // @connect      patreonusercontent.com
 // @connect      patreon.com
 // @run-at       document-start
